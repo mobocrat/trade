@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stocks</title>
+</head>
+
+<body>
+    <div id="container" style="column-count: 2;">
+        <div id="price"></div>
+        <div id="transaction"></div>
+        <div id="confidence"></div>
+        <div id="asset"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        var price = new ApexCharts(document.querySelector("#price"), {
+            series: [],
+            chart: {
+                type: 'candlestick',
+                height: 200,
+            },
+            title: {
+                text: 'Price',
+                align: 'left'
+            },
+            noData: {
+                text: 'Loading...'
+            },
+            xaxis: {
+                type: 'datetime'
+            }
+        });
+        price.render();
+        var transaction = new ApexCharts(document.querySelector("#transaction"), {
+            series: [],
+            chart: {
+                type: 'line',
+                height: 200,
+            },
+            title: {
+                text: 'Transaction',
+                align: 'left'
+            },
+            noData: {
+                text: 'Loading...'
+            },
+            xaxis: {
+                type: 'datetime'
+            }
+        });
+        transaction.render();
+        new WebSocket("ws://localhost:8080/price").onmessage = function (event) {
+            var data = JSON.parse(event.data);
+            var prices = [];
+            var txs = [];
+            data.forEach(e => {
+                prices.push({
+                    x: new Date(e.x),
+                    y: [e.y[0], e.y[1], e.y[2], e.y[3]]
+                });
+                txs.push({
+                    x: new Date(e.x),
+                    y: e.y[4]
+                });
+            });
+            price.updateSeries([{
+                name: 'Price',
+                data: prices,
+            }], false);
+            transaction.updateSeries([{
+                name: 'Transaction',
+                data: txs,
+            }], false);
+        };
+        var confidence = new ApexCharts(document.querySelector("#confidence"), {
+            series: [],
+            chart: {
+                type: 'histogram',
+                height: 200
+            },
+            title: {
+                text: 'Confidence Distribution',
+                align: 'left'
+            },
+            noData: {
+                text: 'Loading...'
+            },
+            dataLabels: {
+                enabled: false
+            },
+            xaxis: {
+                type: 'number',
+                min: 0,
+                max: 100,
+                tickAmount: 4,
+            },
+            yaxis: {
+                type: 'number',
+                tickAmount: 4,
+            }
+        })
+        confidence.render();
+        new WebSocket("ws://localhost:8080/confidence").onmessage = function (event) {
+            confidence.updateSeries([{
+                name: 'Confidence',
+                data: JSON.parse(event.data),
+            }], false);
+        };
+        var asset = new ApexCharts(document.querySelector("#asset"), {
+            series: [],
+            chart: {
+                type: 'histogram',
+                height: 200
+            },
+            title: {
+                text: 'Asset Distribution',
+                align: 'left'
+            },
+            noData: {
+                text: 'Loading...'
+            },
+            dataLabels: {
+                enabled: false
+            },
+            xaxis: {
+                type: 'number',
+                min: 0,
+                max: 20,
+                tickAmount: 4,
+            },
+            yaxis: {
+                type: 'number',
+                tickAmount: 4,
+            }
+        })
+        asset.render();
+        new WebSocket("ws://localhost:8080/asset").onmessage = function (event) {
+            asset.updateSeries([{
+                name: 'Asset',
+                data: JSON.parse(event.data),
+            }], false);
+        };
+    </script>
+</body>
+
+</html>
