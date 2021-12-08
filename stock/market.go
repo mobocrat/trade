@@ -11,22 +11,15 @@ func New(closeInterval time.Duration) *Service {
 		ticker := time.NewTicker(closeInterval)
 		for range ticker.C {
 			s.mutex.Lock()
-			for i := 0; i < len(s.buyers); i++ {
-				buyer := s.buyers[i]
-				for _, seller := range s.sellers {
-					if buyer.Offer >= seller.Offer && seller.Price == 0 {
-						seller.Price = buyer.Offer
-						buyer.Price = seller.Offer
-						s.updateStats(seller.Offer)
-						break
-					}
+			firstMatch(s.buyers, s.sellers)
+			for _, buyer := range s.buyers {
+				buyer.Barrier.Done()
+			}
+			for _, seller := range s.sellers {
+				if seller.Price > 0 {
+					s.updateStats(seller.Offer)
 				}
-			}
-			for _, b := range s.buyers {
-				b.Barrier.Done()
-			}
-			for _, s := range s.sellers {
-				s.Barrier.Done()
+				seller.Barrier.Done()
 			}
 			s.rounds++
 			s.buyers = nil
@@ -39,11 +32,11 @@ func New(closeInterval time.Duration) *Service {
 }
 
 type Stats struct {
-	Open         int
-	High         int
-	Low          int
-	Close        int
-	Transactions int
+	Open  int
+	High  int
+	Low   int
+	Close int
+	Tx    int
 }
 
 type transaction struct {
@@ -83,11 +76,11 @@ func (s *Service) Buy(price int) (int, bool) {
 func (s *Service) Stat() (int, int, int, int, int) {
 	s.mutex.Lock()
 	cur := s.stats
-	cur.Transactions /= s.rounds
+	cur.Tx /= s.rounds
 	s.stats = &Stats{Open: cur.Close}
 	s.rounds = 0
 	s.mutex.Unlock()
-	return cur.Open, cur.High, cur.Low, cur.Close, cur.Transactions
+	return cur.Open, cur.High, cur.Low, cur.Close, cur.Tx
 }
 
 func (s *Service) updateStats(price int) {
@@ -101,5 +94,5 @@ func (s *Service) updateStats(price int) {
 		s.stats.Low = price
 	}
 	s.stats.Close = price
-	s.stats.Transactions++
+	s.stats.Tx++
 }
