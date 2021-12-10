@@ -1,6 +1,6 @@
 package stock
 
-func firstMatch(buyers, sellers []*transaction) {
+func firstMatch(buyers, sellers []*Tx) {
 	for i := 0; i < len(buyers); i++ {
 		buyer := buyers[i]
 		for _, seller := range sellers {

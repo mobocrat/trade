@@ -39,22 +39,22 @@ type Stats struct {
 	Tx    int
 }
 
-type transaction struct {
+type Tx struct {
 	Offer   int
 	Price   int
 	Barrier sync.WaitGroup
 }
 
 type Service struct {
-	buyers  []*transaction
-	sellers []*transaction
+	buyers  []*Tx
+	sellers []*Tx
 	rounds  int
 	stats   *Stats
 	mutex   sync.Mutex
 }
 
 func (s *Service) Sell(price int) (int, bool) {
-	tx := &transaction{Offer: price}
+	tx := &Tx{Offer: price}
 	tx.Barrier.Add(1)
 	s.mutex.Lock()
 	s.sellers = append(s.sellers, tx)
@@ -64,7 +64,7 @@ func (s *Service) Sell(price int) (int, bool) {
 }
 
 func (s *Service) Buy(price int) (int, bool) {
-	tx := &transaction{Offer: price}
+	tx := &Tx{Offer: price}
 	tx.Barrier.Add(1)
 	s.mutex.Lock()
 	s.buyers = append(s.buyers, tx)
