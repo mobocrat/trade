@@ -11,7 +11,7 @@ func New(closeInterval time.Duration) *Service {
 		ticker := time.NewTicker(closeInterval)
 		for range ticker.C {
 			s.mutex.Lock()
-			firstMatch(s.buyers, s.sellers)
+			Match(s.buyers, s.sellers, "random")
 			for _, buyer := range s.buyers {
 				buyer.Barrier.Done()
 			}
