@@ -25,28 +25,34 @@ func New(market Market) *Trader {
 	}
 	go func() {
 		expect := 1000 + rand.Intn(100)
-		mustSell := t.Assets() >= 5
+		sell := t.Assets() >= 5
+		hist := []int{}
 		for {
-			margin := atLeast(100*t.Confidence()/100, 1)
-			if mustSell && t.Assets() > 0 {
-				if price, sold := market.Sell(expect + margin); sold {
+			if n := len(hist); n > 2 {
+				boom := hist[n-1] > hist[n-2] && hist[n-2] > hist[n-3]
+				sell = boom || t.Assets() > 5
+			}
+			if sell {
+				if price, sold := market.Sell(expect); sold {
+					hist = append(hist, price)
 					t.moreConfident()
-					expect = price
+					expect += (price - expect) * t.Confidence() / 100
 					t.decAssets()
 				} else {
 					t.lessConfident()
+					margin := 100 * t.Confidence() / 100
 					expect = atLeast(expect-margin, 1)
-					mustSell = t.Assets() >= 5
 				}
 			} else {
-				if price, bought := market.Buy(expect - margin); bought {
+				if price, bought := market.Buy(expect); bought {
+					hist = append(hist, price)
 					t.moreConfident()
-					expect = price
+					expect += (price - expect) * t.Confidence() / 100
 					t.incAssets()
 				} else {
 					t.lessConfident()
+					margin := 100 * t.Confidence() / 100
 					expect += margin
-					mustSell = t.Assets() >= 5
 				}
 			}
 		}

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	samplingInterval = time.Second
+	samplingInterval = 2 * time.Second
 	samplesPerUpdate = 40
 )
 

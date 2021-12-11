@@ -19,7 +19,7 @@ type Sample struct {
 }
 
 type Statter interface {
-	Stat() (open, high, low, close, txs int)
+	Stat() (open, high, low, close, txs, buyers, sellers int)
 }
 
 func New(interval time.Duration, provider Statter) *Service {
@@ -29,11 +29,11 @@ func New(interval time.Duration, provider Statter) *Service {
 	go func() {
 		ticker := time.NewTicker(interval)
 		for range ticker.C {
-			open, high, low, close, txs := provider.Stat()
+			open, high, low, close, txs, buyers, sellers := provider.Stat()
 			service.mutex.Lock()
 			service.samples = append(service.samples, Sample{
 				X: JSONTime(time.Now()),
-				Y: []int{open, high, low, close, txs},
+				Y: []int{open, high, low, close, txs, buyers, sellers},
 			})
 			service.mutex.Unlock()
 		}

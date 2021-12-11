@@ -12,6 +12,8 @@
     <div id="container" style="column-count: 2;">
         <div id="price"></div>
         <div id="transaction"></div>
+        <div id="buyers"></div>
+        <div id="sellers"></div>
         <div id="confidence"></div>
         <div id="asset"></div>
     </div>
@@ -58,10 +60,58 @@
             }
         });
         transaction.render();
+        var buyer = new ApexCharts(document.querySelector("#buyers"), {
+            series: [],
+            chart: {
+                type: 'line',
+                height: 200,
+            },
+            title: {
+                text: 'Buyers',
+                align: 'left'
+            },
+            noData: {
+                text: 'Loading...'
+            },
+            xaxis: {
+                type: 'datetime'
+            },
+            yaxis: {
+                min: 0,
+                max: 1000,
+                tickAmount: 5
+            }
+        });
+        buyer.render();
+        var seller = new ApexCharts(document.querySelector("#sellers"), {
+            series: [],
+            chart: {
+                type: 'line',
+                height: 200,
+            },
+            title: {
+                text: 'Sellers',
+                align: 'left'
+            },
+            noData: {
+                text: 'Loading...'
+            },
+            xaxis: {
+                type: 'datetime'
+            },
+            yaxis: {
+                min: 0,
+                max: 1000,
+                tickAmount: 5
+            }
+        });
+        seller.render();
         new WebSocket("ws://localhost:8080/price").onmessage = function (event) {
             var data = JSON.parse(event.data);
             var prices = [];
             var txs = [];
+            var buyers = [];
+            var sellers = [];
             data.forEach(e => {
                 prices.push({
                     x: new Date(e.x),
@@ -71,6 +121,14 @@
                     x: new Date(e.x),
                     y: e.y[4]
                 });
+                buyers.push({
+                    x: new Date(e.x),
+                    y: e.y[5]
+                });
+                sellers.push({
+                    x: new Date(e.x),
+                    y: e.y[6]
+                });
             });
             price.updateSeries([{
                 name: 'Price',
@@ -79,6 +137,14 @@
             transaction.updateSeries([{
                 name: 'Transaction',
                 data: txs,
+            }], false);
+            buyer.updateSeries([{
+                name: 'Buyers',
+                data: buyers,
+            }], false);
+            seller.updateSeries([{
+                name: 'Sellers',
+                data: sellers,
             }], false);
         };
         var confidence = new ApexCharts(document.querySelector("#confidence"), {
